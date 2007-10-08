@@ -42,6 +42,7 @@ typedef struct _nss_swath_list
 int is_leap_year (int year);
 
 nss_swath_list * nss_build_swath_list (FILE *fp, int verbose);
+void nss_check_timestamp (const nss_swath_list *swath_list, char *timestamp);
 void nss_detect_gaps (const nss_swath_list *swath_list,
                       int gapsize, int refine);
 void nss_free_swath_list (const nss_swath_list *swath_list);

@@ -52,8 +52,7 @@ main (int argc, char *argv[])
 
   if (gapdetection_flag) nss_detect_gaps (swath_list, gapsize, refine_flag);
 
-  /*if (timestamp) nss_check_timestamp (timestamp);*/
-  if (timestamp) printf ("Timestamp check not yet implemented\n");
+  if (timestamp) nss_check_timestamp (swath_list, timestamp);
 
   if (printinfo_flag) nss_print_info (swath_list);
 
@@ -93,7 +92,8 @@ parse_options (int argc, char *argv[])
         "  -s, --size=GAPSIZE     Ignore gaps smaller than GAPSIZE minutes.\n" \
         "  -t, --timestamp=TIME   Check if any file provides data for the\n" \
         "                         given timestamp. TIME needs to be specified\n" \
-        "                         the format yyyy-mm-dd hh:mm\n" \
+        "                         the format yyyy-mm-dd hh:mm. NOTE: The time\n" \
+        "                         you give is converted from localtime to GMT.\n" \
         "  -v, --verbose          Be more verbose.\n" \
         "\n" \
         "Report bugs to Oliver Lemke <olemke@core-dump.info>.\n";

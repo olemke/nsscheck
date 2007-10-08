@@ -135,6 +135,64 @@ nss_build_swath_list (FILE *fp, int verbose)
 }
 
 
+void nss_check_timestamp (const nss_swath_list *swath_list, char *timestamp)
+{
+  char str[5];
+  struct tm tstamp;
+  time_t checktime;
+
+  tstamp.tm_sec = 0;
+  tstamp.tm_isdst = 0;
+
+  str[4] = '\0'; strncpy (str, timestamp, 4);
+  tstamp.tm_year = strtol (str, NULL, 10) - 1900;
+
+  str[2] = '\0'; strncpy (str, timestamp + 5, 2);
+  tstamp.tm_mon = strtol (str, NULL, 10) - 1;
+
+  str[2] = '\0'; strncpy (str, timestamp + 8, 2);
+  tstamp.tm_mday = strtol (str, NULL, 10);
+
+  str[2] = '\0'; strncpy (str, timestamp + 11, 2);
+  tstamp.tm_hour = strtol (str, NULL, 10);
+
+  str[2] = '\0'; strncpy (str, timestamp + 14, 2);
+  tstamp.tm_min = strtol (str, NULL, 10);
+
+  checktime = mktime (&tstamp);
+  if (checktime == (time_t)(-1))
+    {
+      printf ("Error converting time.\n");
+    }
+  else
+    {
+      char timestr[1024];
+      nss_swath_list *cur;
+      int found = 0;
+      
+      cur = (nss_swath_list *)swath_list;
+      while (!found && cur && cur->swath)
+        {
+          if (cur->swath->stime <= checktime && cur->swath->etime >= checktime)
+            {
+              found = 1;
+            }
+          else
+            {
+              cur = cur->next;
+            }
+        }
+
+      strftime (timestr, 1024, "%Y-%m-%d %H:%M", gmtime (&checktime));
+      if (found)
+        printf ("Timestamp %s covered by file %s.\n",
+                timestr, cur->swath->filename);
+      else
+        printf ("Timestamp %s not found.\n", timestr);
+    }
+}
+
+
 void
 nss_detect_gaps (const nss_swath_list *swath_list, int gapsize, int refine)
 {
