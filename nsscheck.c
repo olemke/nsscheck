@@ -22,7 +22,7 @@
 #include <getopt.h>
 #include "nssswath.h"
 
-static int gapdetection_flag = 1;
+static int gapdetection_flag = 0;
 static int gapsize = 0;
 static int printlist_flag = 0;
 static int refine_flag = 1;
@@ -37,6 +37,12 @@ main (int argc, char *argv[])
   nss_swath_list *swath_list;
 
   parse_options (argc, argv);
+
+  if (!printlist_flag && !gapdetection_flag)
+    {
+      printf ("Just must at least specify -g or -l.\n");
+      return (EXIT_FAILURE);
+    }
 
   swath_list = nss_build_swathlist (stdin, verbose_flag);
 
@@ -58,9 +64,9 @@ parse_options (int argc, char *argv[])
       static struct option long_options[] =
         {
           /* These options set a flag. */
+            {"gaps",     no_argument,       0, 'g'},
             {"help",    no_argument,       0, 'h'},
             {"list",    no_argument,       0, 'l'},
-            {"nogap",   no_argument,       0, 'n'},
             {"norefine",no_argument,       0, 'r'},
             {"size",    required_argument, 0, 's'},
             {"verbose", no_argument,       0, 'v'},
@@ -68,9 +74,9 @@ parse_options (int argc, char *argv[])
         };
 
       static char helptext[] =
+        "  -g, --gaps             Perform gap detection.\n" \
         "  -h, --help             Print this help\n" \
         "  -l, --list             Print swath list.\n" \
-        "  -n, --nogap            Skip gap detection.\n" \
         "      --norefine         Only do simple gap detection.\n" \
         "  -s, --size=GAPSIZE     Ignore gaps smaller than GAPSIZE minutes.\n" \
         "  -v, --verbose          Be more verbose.\n" \
@@ -80,7 +86,7 @@ parse_options (int argc, char *argv[])
       /* getopt_long stores the option index here. */
       int option_index = 0;
 
-      c = getopt_long (argc, argv, "hlns:v",
+      c = getopt_long (argc, argv, "ghls:v",
                        long_options, &option_index);
 
       /* Detect the end of the options. */
@@ -110,8 +116,8 @@ parse_options (int argc, char *argv[])
           break;
 
           /* Flags */
+        case 'g': gapdetection_flag = 1; break;
         case 'l': printlist_flag = 1; break;
-        case 'n': gapdetection_flag = 0; break;
         case 'r': refine_flag = 0; break;
         case 'v': verbose_flag = 1; break;
 

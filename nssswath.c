@@ -21,7 +21,7 @@
 #include <string.h>
 #include "nssswath.h"
 
-nss_swath_list *list_bubble_sort (const nss_swath_list *swath_list);
+nss_swath_list *nss_sort_swaths (const nss_swath_list *swath_list);
 int nss_parse_filename (const char *fname, nss_swath_data *swath, int verbose);
 
 
@@ -42,7 +42,7 @@ is_leap_year (int year)
 }
 
 /* Taken from http://www.c.happycodings.com/Sorting_Searching/code5.html */
-nss_swath_list *list_bubble_sort (const nss_swath_list *swath_list) {
+nss_swath_list *nss_sort_swaths (const nss_swath_list *swath_list) {
 
   nss_swath_list *head;
   nss_swath_list *a = NULL;
@@ -129,7 +129,7 @@ nss_build_swathlist (FILE *fp, int verbose)
 
     }
 
-  slist = list_bubble_sort (slist);
+  slist = nss_sort_swaths (slist);
 
   return (slist);
 }
@@ -152,7 +152,9 @@ nss_detect_gaps (const nss_swath_list *swath_list, int gapsize, int refine)
           gap.etime = cur->next->swath->stime;
 
           /* To be 100% sure, check the whole swath list for
-           * a file that fills the gap. */
+           * a file that fills the gap. We might have two files
+           * with the same starting time but different end time.
+           * This check ensures that we take both into account. */
           it = (nss_swath_list *)swath_list;
           while (refine && it && it->swath && gap.stime)
             {
