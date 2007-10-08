@@ -20,34 +20,14 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <getopt.h>
-#include <string.h>
-#include <time.h>
+#include "nssswath.h"
 
 static int gapdetection_flag = 1;
 static int gapsize = 0;
 static int printlist_flag = 0;
 static int verbose_flag = 0;
 
-typedef struct _nss_swath_data
-{
-  time_t stime;
-  time_t etime;
-} nss_swath_data;
-
-typedef struct _nss_swath_list
-{
-  nss_swath_data *swath;
-  struct _nss_swath_list *next;
-} nss_swath_list;
-
-
-int is_leap_year (int year);
 void parse_options (int argc, char *argv[]);
-
-nss_swath_list * nss_build_swathlist (FILE *fp);
-void nss_detect_gaps (const nss_swath_list *swath_list, int gap_size);
-int nss_parse_filename (const char *buf, nss_swath_data *swath);
-void nss_print_swathlist (const nss_swath_list *swath_list);
 
 
 int
@@ -57,30 +37,13 @@ main (int argc, char *argv[])
 
   parse_options (argc, argv);
 
-  swath_list = nss_build_swathlist (stdin);
+  swath_list = nss_build_swathlist (stdin, verbose_flag);
 
   if (printlist_flag) nss_print_swathlist (swath_list);
 
   if (gapdetection_flag) nss_detect_gaps (swath_list, gapsize);
 
   return (EXIT_SUCCESS);
-}
-
-
-int
-is_leap_year (int year)
-{
-  int leap = 0;
-
-  if (year % 400 == 0)
-    leap = 1;
-  else if (year % 100 == 0)
-    leap = 0;
-  else if (year % 4 == 0)
-    leap = 1;
-  else leap = 0;
-
-  return leap;
 }
 
 
@@ -162,158 +125,6 @@ parse_options (int argc, char *argv[])
         default:
           exit (EXIT_FAILURE);
         }
-    }
-}
-
-
-nss_swath_list *
-nss_build_swathlist (FILE *fp)
-{
-  char buf[1024];
-  nss_swath_list *slist, *current_swath;
-
-  slist = malloc (sizeof (nss_swath_list));
-  slist->swath = NULL;
-  slist->next = NULL;
-  current_swath = slist;
-
-  while (!feof (fp))
-    {
-      nss_swath_data *swath = malloc (sizeof (nss_swath_data));
-
-      fgets (buf, 1024, fp);
-      if (feof (fp)) break;
-      if (!nss_parse_filename (buf, swath))
-        {
-          nss_swath_list *new_swath = malloc (sizeof (nss_swath_list));
-          new_swath->swath = NULL;
-          new_swath->next = NULL;
-          current_swath->swath = swath;
-          current_swath->next = new_swath;
-          current_swath = new_swath;
-        }
-      else
-        fprintf (stderr, "Parse error: %s\n", buf);
-
-    }
-
-  return (slist);
-}
-
-
-void
-nss_detect_gaps (const nss_swath_list *swath_list, int gap_size)
-{
-  nss_swath_list *cur = (nss_swath_list *)swath_list;
-
-  while (cur->next && cur->next->swath)
-    {
-      if (cur->next->swath->stime > cur->swath->etime
-          && cur->next->swath->stime - cur->swath->etime >= gap_size*60)
-        {
-          char timestr[1024];
-          strftime (timestr, 1024, "%Y-%m-%d %H:%M",
-                    gmtime (&cur->swath->etime));
-          printf ("Gap between %s", timestr);
-
-          strftime (timestr, 1024, "%Y-%m-%d %H:%M",
-                    gmtime (&cur->next->swath->stime));
-          printf (" and %s, %ld mins\n", timestr,
-                  (cur->next->swath->stime - cur->swath->etime) / 60);
-        }
-
-      cur = cur->next;
-    }
-
-  printf ("\n");
-  printf ("Gaps larger than %d minutes.\n", gap_size);
-}
-
-
-/* Parse the start and end time of the swath and convert them to unix time
- * format (seconds elapsed since 1970-01-01 00:00:00)
- */
-int
-nss_parse_filename (const char *buf, nss_swath_data *swath)
-{
-  char *nss_start;
-  char str[4];
-  time_t year;
-  time_t day;
-  time_t hour;
-  time_t min;
-  int leap = 0;
-
-  if (NULL == (nss_start = strstr (buf, "NSS."))) return 1;
-
-  str[2] = '\0'; strncpy (str, nss_start + 13, 2);
-  year = strtol (str, NULL, 10);
-  if (year >= 70)
-    year += 1900;
-  else
-    year += 2000;
-
-  if (verbose_flag) printf ("Original Start: %4ld", year);
-
-  leap = is_leap_year (year);
-
-  str[3] = '\0'; strncpy (str, nss_start + 15, 3);
-  day = strtol (str, NULL, 10);
-  if (verbose_flag) printf (" %3ld", day);
-
-  str[2] = '\0'; strncpy (str, nss_start + 20, 2);
-  hour = strtol (str, NULL, 10);
-  if (verbose_flag) printf (" %02ld", hour);
-
-  str[2] = '\0'; strncpy (str, nss_start + 22, 2);
-  min = strtol (str, NULL, 10);
-  if (verbose_flag) printf (":%02ld", min);
-
-  swath->stime = (year - 1970) * 60 * 60 * 24 * 365
-   + leap * 60 * 60 * 24
-   /* FIXME: Why are we 8 days short here??????? */
-   + (day+8)  * 60 * 60 * 24
-   + hour * 60 * 60
-   + min  * 60;
-
-  str[2] = '\0'; strncpy (str, nss_start + 26, 2);
-  hour = strtol (str, NULL, 10);
-  if (verbose_flag) printf (" End:          %02ld", hour);
-
-  str[2] = '\0'; strncpy (str, nss_start + 28, 2);
-  min = strtol (str, NULL, 10);
-  if (verbose_flag) printf (":%02ld\n", min);
-
-  swath->etime = (year - 1970) * 60 * 60 * 24 * 365
-   + leap * 60 * 60 * 24
-   /* FIXME: Why are we 8 days short here??????? */
-   + (day+8)  * 60 * 60 * 24
-   + hour * 60 * 60
-   + min  * 60;
-
-  if (swath->etime < swath->stime) swath->etime += 60 * 60 * 24;
-
-  if (verbose_flag)
-    {
-      char timestr[1024];
-      strftime (timestr, 1024, "%Y %j %H:%M", gmtime (&swath->stime));
-      printf ("UNIX TS  Start: %s", timestr);
-      strftime (timestr, 1024, "%Y %j %H:%M", gmtime (&swath->etime));
-      printf (" End: %s\n", timestr);
-    }
-  return 0;
-}
-
-
-void nss_print_swathlist (const nss_swath_list *swath_list)
-{
-  nss_swath_list *cur = (nss_swath_list *)swath_list;
-
-  while (cur && cur->swath)
-    {
-      printf ("Start: %10ld - End: %10ld\n",
-              cur->swath->stime, cur->swath->etime);
-      cur = cur->next;
     }
 }
 
