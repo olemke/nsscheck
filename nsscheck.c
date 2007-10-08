@@ -1,4 +1,4 @@
-/* concheck: Check NSS data for continuity
+/* nsscheck: Check NSS data for continuity
  *
  * Copyright (C) 2007 Oliver Lemke
  *
@@ -94,18 +94,19 @@ parse_options (int argc, char *argv[])
       static struct option long_options[] =
         {
           /* These options set a flag. */
-            {"help",    no_argument,       0, 'h'},
             {"gap",     required_argument, 0, 'g'},
-            {"nogap",   no_argument,       0, 'n'},
+            {"help",    no_argument,       0, 'h'},
             {"list",    no_argument,       0, 'l'},
+            {"nogap",   no_argument,       0, 'n'},
             {"verbose", no_argument,       0, 'v'},
             {0, 0, 0, 0}
         };
 
       static char helptext[] =
-        "  -h, --help             Print this help\n" \
         "  -g, --gap=GAPSIZE      Ignore gaps smaller than GAPSIZE minutes.\n" \
+        "  -h, --help             Print this help\n" \
         "  -l, --list             Print swath list.\n" \
+        "  -n, --nogap            Skip gap detection.\n" \
         "  -v, --verbose          Be more verbose. (not implemented)\n" \
         "\n" \
         "Report bugs to Oliver Lemke <olemke@core-dump.info>.\n";
