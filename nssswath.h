@@ -27,6 +27,7 @@
 
 typedef struct _nss_swath_data
 {
+  char * filename;
   time_t stime;
   time_t etime;
 } nss_swath_data;
@@ -41,8 +42,8 @@ typedef struct _nss_swath_list
 int is_leap_year (int year);
 
 nss_swath_list * nss_build_swathlist (FILE *fp, int verbose);
-void nss_detect_gaps (const nss_swath_list *swath_list, int gapsize);
-int nss_parse_filename (const char *buf, nss_swath_data *swath, int verbose);
+void nss_detect_gaps (const nss_swath_list *swath_list,
+                      int gapsize, int refine);
 void nss_print_swathlist (const nss_swath_list *swath_list);
 
 #endif /* NSSSWATH_H */

@@ -1,6 +1,6 @@
 CC = gcc
 TARGETS = nsscheck
-CPPFLAGS = -Wall -pedantic -std=c99
+CPPFLAGS = -Wall -pedantic
 
 all: nsscheck
 

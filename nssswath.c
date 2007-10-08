@@ -18,7 +18,11 @@
  */
 
 #include <stdlib.h>
+#include <string.h>
 #include "nssswath.h"
+
+nss_swath_list *list_bubble_sort (const nss_swath_list *swath_list);
+int nss_parse_filename (const char *fname, nss_swath_data *swath, int verbose);
 
 
 int
@@ -35,6 +39,62 @@ is_leap_year (int year)
   else leap = 0;
 
   return leap;
+}
+
+/* Taken from http://www.c.happycodings.com/Sorting_Searching/code5.html */
+nss_swath_list *list_bubble_sort (const nss_swath_list *swath_list) {
+
+  nss_swath_list *head;
+  nss_swath_list *a = NULL;
+  nss_swath_list *b = NULL; 
+  nss_swath_list *c = NULL;
+  nss_swath_list *e = NULL; 
+  nss_swath_list *tmp = NULL; 
+
+  /* 
+  // the `c' node precedes the `a' and `e' node 
+  // pointing up the node to which the comparisons
+  // are being made. 
+  */
+  head = (nss_swath_list *)swath_list;
+  while(e != head->next)
+    {
+      c = a = head;
+      b = a->next;
+
+      while(a != e)
+        {
+          if(a->swath && b->swath && a->swath->stime > b->swath->stime)
+            {
+              if(a == head)
+                {
+                  tmp = b -> next;
+                  b->next = a;
+                  a->next = tmp;
+                  head = b;
+                  c = b;
+                }
+              else
+                {
+                  tmp = b->next;
+                  b->next = a;
+                  a->next = tmp;
+                  c->next = b;
+                  c = b;
+                }
+            }
+          else
+            {
+              c = a;
+              a = a->next;
+            }
+          b = a->next;
+          if(b == e)
+            e = a;
+        }
+    }
+
+  return (head);
 }
 
 
@@ -69,12 +129,14 @@ nss_build_swathlist (FILE *fp, int verbose)
 
     }
 
+  slist = list_bubble_sort (slist);
+
   return (slist);
 }
 
 
 void
-nss_detect_gaps (const nss_swath_list *swath_list, int gapsize)
+nss_detect_gaps (const nss_swath_list *swath_list, int gapsize, int refine)
 {
   nss_swath_list *cur = (nss_swath_list *)swath_list;
 
@@ -83,22 +145,58 @@ nss_detect_gaps (const nss_swath_list *swath_list, int gapsize)
       if (cur->next->swath->stime > cur->swath->etime
           && cur->next->swath->stime - cur->swath->etime >= gapsize*60)
         {
-          char timestr[1024];
-          strftime (timestr, 1024, "%Y-%m-%d %H:%M",
-                    gmtime (&cur->swath->etime));
-          printf ("Gap between %s", timestr);
+          nss_swath_data gap;
+          nss_swath_list *it;
 
-          strftime (timestr, 1024, "%Y-%m-%d %H:%M",
-                    gmtime (&cur->next->swath->stime));
-          printf (" and %s, %ld mins\n", timestr,
-                  (cur->next->swath->stime - cur->swath->etime) / 60);
+          gap.stime = cur->swath->etime;
+          gap.etime = cur->next->swath->stime;
+
+          /* To be 100% sure, check the whole swath list for
+           * a file that fills the gap. */
+          it = (nss_swath_list *)swath_list;
+          while (refine && it && it->swath && gap.stime)
+            {
+              if (it->swath->stime <= gap.stime
+                  && it->swath->etime >= gap.etime)
+                {
+                  gap.stime = gap.etime = 0;
+                }
+
+              if (it->swath->stime <= gap.etime
+                  && it->swath->etime >= gap.etime)
+                {
+                  gap.etime = it->swath->stime;
+                }
+
+              if (it->swath->stime <= gap.stime
+                  && it->swath->etime >= gap.stime)
+                {
+                  gap.stime = it->swath->etime;
+                }
+
+              it = it->next;
+            }
+
+          if (gap.etime - gap.stime > 0)
+            {
+              char timestr[1024];
+
+              strftime (timestr, 1024, "%Y-%m-%d %H:%M", gmtime (&gap.stime));
+              printf ("Gap between %s", timestr);
+
+              strftime (timestr, 1024, "%Y-%m-%d %H:%M", gmtime (&gap.etime));
+              printf (" and %s, %ld mins\n", timestr, (gap.etime - gap.stime) / 60);
+            }
         }
 
       cur = cur->next;
     }
 
-  printf ("\n");
-  printf ("Gaps larger than %d minutes.\n", gapsize);
+  if (gapsize)
+    {
+      printf ("\n");
+      printf ("Gaps smaller than %d minutes ignored.\n", gapsize);
+    }
 }
 
 
@@ -106,16 +204,22 @@ nss_detect_gaps (const nss_swath_list *swath_list, int gapsize)
  * format (seconds elapsed since 1970-01-01 00:00:00)
  */
 int
-nss_parse_filename (const char *buf, nss_swath_data *swath, int verbose)
+nss_parse_filename (const char *fname, nss_swath_data *swath, int verbose)
 {
   char *nss_start;
+  char *buf;
   char str[4];
+  int i;
   time_t year;
   time_t day;
   time_t hour;
   time_t min;
 
-  if (NULL == (nss_start = strstr (buf, "NSS."))) return 1;
+  if (NULL == (nss_start = strstr (fname, "NSS."))) return 1;
+
+  swath->filename = strdup (fname);
+  if (NULL != (buf = strstr (swath->filename, "\n")))
+      *buf = '\0';
 
   str[2] = '\0'; strncpy (str, nss_start + 13, 2);
   year = strtol (str, NULL, 10);
@@ -124,6 +228,7 @@ nss_parse_filename (const char *buf, nss_swath_data *swath, int verbose)
   else
     year += 2000;
 
+  if (verbose) printf ("Filename: %s\n", swath->filename);
   if (verbose) printf ("Original Start: %4ld", year);
 
   str[3] = '\0'; strncpy (str, nss_start + 15, 3);
@@ -143,7 +248,7 @@ nss_parse_filename (const char *buf, nss_swath_data *swath, int verbose)
    + hour * 60 * 60
    + min  * 60;
 
-  for (int i=1972; i<year; i++)
+  for (i=1972; i<year; i++)
     swath->stime += is_leap_year (i) * 60 * 60 * 24;
 
   str[2] = '\0'; strncpy (str, nss_start + 26, 2);
@@ -159,7 +264,7 @@ nss_parse_filename (const char *buf, nss_swath_data *swath, int verbose)
    + hour * 60 * 60
    + min  * 60;
 
-  for (int i=1972; i<year; i++)
+  for (i=1972; i<year; i++)
     swath->etime += is_leap_year (i) * 60 * 60 * 24;
 
   if (swath->etime < swath->stime) swath->etime += 60 * 60 * 24;
