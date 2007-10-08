@@ -305,14 +305,51 @@ nss_parse_filename (const char *fname, nss_swath_data *swath, int verbose)
 }
 
 
+void nss_print_info (const nss_swath_list *swath_list)
+{
+  nss_swath_list *cur;
+  long count = 1;
+  time_t stime;
+  time_t etime;
+
+  cur = (nss_swath_list *)swath_list;
+  if (cur->swath)
+    {
+      char timestr[1024];
+
+      stime = cur->swath->stime;
+      etime = cur->swath->etime;
+      cur = cur->next;
+      while (cur && cur->swath)
+        {
+          count++;
+          if (cur->swath->stime < stime) stime = cur->swath->stime;
+          if (cur->swath->etime > etime) etime = cur->swath->etime;
+          cur = cur->next;
+        }
+
+      strftime (timestr, 1024, "%Y-%m-%d %H:%M", gmtime (&stime));
+      printf ("Start time: %s\n", timestr);
+      strftime (timestr, 1024, "%Y-%m-%d %H:%M", gmtime (&etime));
+      printf ("End time  : %s\n", timestr);
+      printf ("# of files: %ld\n", count);
+    }
+}
+
+
 void nss_print_swath_list (const nss_swath_list *swath_list)
 {
   nss_swath_list *cur = (nss_swath_list *)swath_list;
 
   while (cur && cur->swath)
     {
-      printf ("Start: %10ld - End: %10ld\n",
-              cur->swath->stime, cur->swath->etime);
+      char timestr[1024];
+      printf ("Filename: %s\n", cur->swath->filename);
+      strftime (timestr, 1024, "%Y-%m-%d %H:%M", gmtime (&cur->swath->stime));
+      printf ("Start time: %s", timestr);
+      strftime (timestr, 1024, "%Y-%m-%d %H:%M", gmtime (&cur->swath->etime));
+      printf (" - End time  : %s\n", timestr);
+
       cur = cur->next;
     }
 }

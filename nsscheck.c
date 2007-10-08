@@ -24,9 +24,11 @@
 
 static int gapdetection_flag = 0;
 static int gapsize = 0;
+static int printinfo_flag = 0;
 static int printlist_flag = 0;
 static int refine_flag = 1;
 static int verbose_flag = 0;
+static char *timestamp = NULL;
 
 void parse_options (int argc, char *argv[]);
 
@@ -38,9 +40,9 @@ main (int argc, char *argv[])
 
   parse_options (argc, argv);
 
-  if (!printlist_flag && !gapdetection_flag)
+  if (!printlist_flag && !printinfo_flag && !gapdetection_flag && !timestamp)
     {
-      printf ("Just must at least specify -g or -l.\n");
+      printf ("You must at least specify -g, -i, -l or -t.\n");
       return (EXIT_FAILURE);
     }
 
@@ -49,6 +51,11 @@ main (int argc, char *argv[])
   if (printlist_flag) nss_print_swath_list (swath_list);
 
   if (gapdetection_flag) nss_detect_gaps (swath_list, gapsize, refine_flag);
+
+  /*if (timestamp) nss_check_timestamp (timestamp);*/
+  if (timestamp) printf ("Timestamp check not yet implemented\n");
+
+  if (printinfo_flag) nss_print_info (swath_list);
 
   nss_free_swath_list (swath_list);
 
@@ -66,21 +73,27 @@ parse_options (int argc, char *argv[])
       static struct option long_options[] =
         {
           /* These options set a flag. */
-            {"gaps",     no_argument,       0, 'g'},
-            {"help",    no_argument,       0, 'h'},
-            {"list",    no_argument,       0, 'l'},
-            {"norefine",no_argument,       0, 'r'},
-            {"size",    required_argument, 0, 's'},
-            {"verbose", no_argument,       0, 'v'},
+            {"gaps",      no_argument,       0, 'g'},
+            {"help",      no_argument,       0, 'h'},
+            {"info",      no_argument,       0, 'i'},
+            {"list",      no_argument,       0, 'l'},
+            {"norefine",  no_argument,       0, 'r'},
+            {"size",      required_argument, 0, 's'},
+            {"timestamp", required_argument, 0, 't'},
+            {"verbose",   no_argument,       0, 'v'},
             {0, 0, 0, 0}
         };
 
       static char helptext[] =
         "  -g, --gaps             Perform gap detection.\n" \
         "  -h, --help             Print this help\n" \
+        "  -i, --info             Print info about the input data.\n" \
         "  -l, --list             Print swath list.\n" \
         "      --norefine         Only do simple gap detection.\n" \
         "  -s, --size=GAPSIZE     Ignore gaps smaller than GAPSIZE minutes.\n" \
+        "  -t, --timestamp=TIME   Check if any file provides data for the\n" \
+        "                         given timestamp. TIME needs to be specified\n" \
+        "                         the format yyyy-mm-dd hh:mm\n" \
         "  -v, --verbose          Be more verbose.\n" \
         "\n" \
         "Report bugs to Oliver Lemke <olemke@core-dump.info>.\n";
@@ -88,7 +101,7 @@ parse_options (int argc, char *argv[])
       /* getopt_long stores the option index here. */
       int option_index = 0;
 
-      c = getopt_long (argc, argv, "ghls:v",
+      c = getopt_long (argc, argv, "ghils:t:v",
                        long_options, &option_index);
 
       /* Detect the end of the options. */
@@ -117,8 +130,13 @@ parse_options (int argc, char *argv[])
           gapsize = strtol (optarg, NULL, 10);
           break;
 
+        case 't':
+          timestamp = optarg;
+          break;
+
           /* Flags */
         case 'g': gapdetection_flag = 1; break;
+        case 'i': printinfo_flag = 1; break;
         case 'l': printlist_flag = 1; break;
         case 'r': refine_flag = 0; break;
         case 'v': verbose_flag = 1; break;

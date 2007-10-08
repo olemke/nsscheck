@@ -45,6 +45,7 @@ nss_swath_list * nss_build_swath_list (FILE *fp, int verbose);
 void nss_detect_gaps (const nss_swath_list *swath_list,
                       int gapsize, int refine);
 void nss_free_swath_list (const nss_swath_list *swath_list);
+void nss_print_info (const nss_swath_list *swath_list);
 void nss_print_swath_list (const nss_swath_list *swath_list);
 
 #endif /* NSSSWATH_H */
