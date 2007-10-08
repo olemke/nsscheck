@@ -44,11 +44,13 @@ main (int argc, char *argv[])
       return (EXIT_FAILURE);
     }
 
-  swath_list = nss_build_swathlist (stdin, verbose_flag);
+  swath_list = nss_build_swath_list (stdin, verbose_flag);
 
-  if (printlist_flag) nss_print_swathlist (swath_list);
+  if (printlist_flag) nss_print_swath_list (swath_list);
 
   if (gapdetection_flag) nss_detect_gaps (swath_list, gapsize, refine_flag);
+
+  nss_free_swath_list (swath_list);
 
   return (EXIT_SUCCESS);
 }

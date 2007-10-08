@@ -99,7 +99,7 @@ nss_swath_list *nss_sort_swaths (const nss_swath_list *swath_list) {
 
 
 nss_swath_list *
-nss_build_swathlist (FILE *fp, int verbose)
+nss_build_swath_list (FILE *fp, int verbose)
 {
   char buf[1024];
   nss_swath_list *slist, *current_swath;
@@ -202,6 +202,27 @@ nss_detect_gaps (const nss_swath_list *swath_list, int gapsize, int refine)
 }
 
 
+void
+nss_free_swath_list (const nss_swath_list *swath_list)
+{
+  nss_swath_list *cur;
+  nss_swath_list *die;
+
+  cur = (nss_swath_list *)swath_list;
+  while (cur)
+    {
+      die = cur;
+      cur = cur->next;
+      if (die->swath && die->swath->filename)
+        {
+          free (die->swath->filename);
+          free (die->swath);
+        }
+      free (die);
+    }
+}
+
+
 /* Parse the start and end time of the swath and convert them to unix time
  * format (seconds elapsed since 1970-01-01 00:00:00)
  */
@@ -284,7 +305,7 @@ nss_parse_filename (const char *fname, nss_swath_data *swath, int verbose)
 }
 
 
-void nss_print_swathlist (const nss_swath_list *swath_list)
+void nss_print_swath_list (const nss_swath_list *swath_list)
 {
   nss_swath_list *cur = (nss_swath_list *)swath_list;
 
