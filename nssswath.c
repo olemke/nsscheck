@@ -108,6 +108,7 @@ nss_build_swath_list (FILE *fp, int verbose)
   nss_swath_list *slist, *current_swath;
   char *satellite = NULL;
   char *instrument = NULL;
+  int numfiles = 0;
 
   slist = malloc (sizeof (nss_swath_list));
   slist->swath = NULL;
@@ -145,6 +146,7 @@ nss_build_swath_list (FILE *fp, int verbose)
           current_swath->swath = swath;
           current_swath->next = new_swath;
           current_swath = new_swath;
+          numfiles++;
         }
       else
         {
@@ -152,6 +154,8 @@ nss_build_swath_list (FILE *fp, int verbose)
         }
 
     }
+
+  printf ("%d files in list.\n\n", numfiles);
 
   if (error)
     {
