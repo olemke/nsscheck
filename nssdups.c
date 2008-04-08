@@ -24,16 +24,21 @@
 void nss_detect_duplicates (const nss_swath_list *swath_list, int checkfiles)
 {
   int error = 0;
-  int broken_files = 0, good_files = 0;
+  int broken_files = 0, good_files = 0, safedel_files = 0;
 
   nss_swath_list *cur = (nss_swath_list *)swath_list;
   nss_swath_list *dups = malloc (sizeof (nss_swath_list));
   nss_swath_list *safedel = malloc (sizeof (nss_swath_list));
   nss_swath_list *current_safedel = safedel;
+  nss_swath_list *broken = malloc (sizeof (nss_swath_list));
+  nss_swath_list *current_broken = broken;
   nss_swath_list *current_dup = dups;
 
   safedel->swath = NULL;
   safedel->next = NULL;
+
+  broken->swath = NULL;
+  broken->next = NULL;
 
   dups->swath = NULL;
   dups->next = NULL;
@@ -84,6 +89,7 @@ void nss_detect_duplicates (const nss_swath_list *swath_list, int checkfiles)
                           printf ("OK");
                           if (found_not_broken)
                             {
+                              safedel_files++;
                               nss_swath_list *new_safedel = malloc (sizeof (nss_swath_list));
                               new_safedel->swath = NULL;
                               new_safedel->next = NULL;
@@ -98,6 +104,12 @@ void nss_detect_duplicates (const nss_swath_list *swath_list, int checkfiles)
                           break;
                         case 1:
                           broken_files++;
+                          nss_swath_list *new_broken = malloc (sizeof (nss_swath_list));
+                          new_broken->swath = NULL;
+                          new_broken->next = NULL;
+                          current_broken->swath=current_dup->swath;
+                          current_broken->next = new_broken;
+                          current_broken = new_broken;
                           printf ("BROKEN");
                           break;
                         default:
@@ -128,23 +140,39 @@ void nss_detect_duplicates (const nss_swath_list *swath_list, int checkfiles)
 
   if (checkfiles)
     {
+      if (safedel_files)
+        {
+          printf ("\nFiles safe to delete:\n");
+
+          current_safedel = safedel;
+          while (current_safedel && current_safedel->swath)
+            {
+              printf ("  %s\n", current_safedel->swath->filename);
+              current_safedel = current_safedel->next;
+            }
+        }
+
+      if (broken_files)
+        {
+          printf ("\nBroken files:\n");
+
+          current_broken = broken;
+          while (current_broken && current_broken->swath)
+            {
+              printf ("  %s\n", current_broken->swath->filename);
+              current_broken = current_broken->next;
+            }
+        }
+
       if (!good_files && broken_files)
         {
           printf ("\nWARNING!!!! Found %d broken files but no good files.\n", broken_files);
           printf ("This might indicate a problem with your zamsu2l1c.sh.\n");
           printf ("Make sure it is working properly!!!\n");
         }
-
-      printf ("\nFiles safe to delete:\n");
-
-      current_safedel = safedel;
-      while (current_safedel && current_safedel->swath)
-        {
-          printf ("  %s\n", current_safedel->swath->filename);
-          current_safedel = current_safedel->next;
-        }
-      nss_free_swath_list (safedel, 0);
     }
 
+  nss_free_swath_list (safedel, 0);
+  nss_free_swath_list (broken, 0);
 }
 
