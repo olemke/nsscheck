@@ -102,16 +102,19 @@ nss_swath_list *nss_sort_swaths (const nss_swath_list *swath_list) {
 nss_swath_list *
 nss_build_swath_list (FILE *fp, int verbose)
 {
+  int error = 0;
   char buf[1024];
   char *chp;
   nss_swath_list *slist, *current_swath;
+  char *satellite = NULL;
+  char *instrument = NULL;
 
   slist = malloc (sizeof (nss_swath_list));
   slist->swath = NULL;
   slist->next = NULL;
   current_swath = slist;
 
-  while (!feof (fp))
+  while (!error && !feof (fp))
     {
       nss_swath_data *swath = malloc (sizeof (nss_swath_data));
 
@@ -120,6 +123,22 @@ nss_build_swath_list (FILE *fp, int verbose)
       if (feof (fp)) break;
       if (!nss_parse_filename (buf, swath, verbose))
         {
+          if (satellite && strcmp (satellite, swath->satellite))
+            {
+              fprintf (stderr, "Data error: File list contains different satellites (%s and %s)\n", satellite, swath->satellite);
+              error = 1;
+              break;
+            }
+          satellite = swath->satellite;
+
+          if (instrument && strcmp (instrument, swath->instrument))
+            {
+              fprintf (stderr, "Data error: File list contains different instruments (%s and %s)\n", instrument, swath->instrument);
+              error = 1;
+              break;
+            }
+          instrument = swath->instrument;
+
           nss_swath_list *new_swath = malloc (sizeof (nss_swath_list));
           new_swath->swath = NULL;
           new_swath->next = NULL;
@@ -134,7 +153,15 @@ nss_build_swath_list (FILE *fp, int verbose)
 
     }
 
-  slist = nss_sort_swaths (slist);
+  if (error)
+    {
+      nss_free_swath_list (slist);
+      slist = NULL;
+    }
+  else
+    {
+      slist = nss_sort_swaths (slist);
+    }
 
   return (slist);
 }
@@ -237,7 +264,15 @@ nss_parse_filename (const char *fname, nss_swath_data *swath, int verbose)
 
   swath->filename = strdup (fname);
 
-  str[2] = '\0'; strncpy (str, nss_start + 13, 2);
+  strncpy (swath->satellite,  nss_start + 9, 2);
+  swath->satellite[4] = '\0';
+
+  strncpy (swath->instrument, nss_start + 4, 4);
+  swath->instrument[4] = '\0';
+
+  strncpy (str, nss_start + 13, 2);
+  str[2] = '\0';
+
   year = strtol (str, NULL, 10);
   if (year >= 70)
     year += 1900;

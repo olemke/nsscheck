@@ -28,6 +28,8 @@
 typedef struct _nss_swath_data
 {
   char * filename;
+  char satellite[3];
+  char instrument[5];
   time_t stime;
   time_t etime;
 } nss_swath_data;

@@ -54,6 +54,12 @@ main (int argc, char *argv[])
     }
 
   swath_list = nss_build_swath_list (stdin, verbose_flag);
+  
+  if (!swath_list)
+    {
+      fprintf (stderr, "Error building swath list\n");
+      return (EXIT_FAILURE);
+    }
 
   if (printlist_flag)    nss_print_swath_list (swath_list);
   if (dupdetection_flag) nss_detect_duplicates (swath_list);
