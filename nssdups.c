@@ -17,18 +17,20 @@
  *
  */
 
+#include <stdlib.h>
 #include "nssdups.h"
 
 
-void nss_detect_duplicates (const nss_swath_list *swath_list)
+void nss_detect_duplicates (const nss_swath_list *swath_list, int checkfiles)
 {
+  int error = 0;
   nss_swath_list *cur = (nss_swath_list *)swath_list;
   nss_swath_list *dups = malloc (sizeof (nss_swath_list));
   nss_swath_list *current_dup = dups;
   dups->swath = NULL;
   dups->next = NULL;
 
-  while (cur->next && cur->next->swath)
+  while (!error && cur->next && cur->next->swath)
     {
       if (!strcmp (cur->swath->basestring, cur->next->swath->basestring))
         {
@@ -46,9 +48,48 @@ void nss_detect_duplicates (const nss_swath_list *swath_list)
         {
           current_dup = dups;
           printf ("Duplicates:\n");
-          while (current_dup)
+          while (!error && current_dup)
             {
-              printf ("  %s\n", current_dup->swath->filename);
+              if (checkfiles)
+                {
+                  int ret;
+                  char cmd[2048] = "";
+
+                  strcat (cmd, "zamsu2l1c.sh ");
+                  strcat (cmd, current_dup->swath->filename);
+                  strcat (cmd, " >/dev/null 2>&1");
+                  ret = system (cmd);
+
+                  printf ("  %s (", current_dup->swath->filename);
+                  switch (ret)
+                    {
+                    case 2:
+                      printf ("zamsu2l1c cancelled, bailing out");
+                      error = 1;
+                      break;
+                    default:
+                      switch (WEXITSTATUS(ret))
+                        {
+                        case 0:
+                          printf ("OK");
+                          break;
+                        case 1:
+                          printf ("BROKEN");
+                          break;
+                        default:
+                          printf ("Error running zamsu2l1c.sh. Check your atovs_tools installation");
+                          break;
+                        }
+                      break;
+                    }
+
+                  printf (")\n");
+
+                }
+              else
+                {
+                  printf ("  %s\n", current_dup->swath->filename);
+                }
               current_dup = current_dup->next;
             }
           nss_free_swath_list (dups, 0);
@@ -60,5 +101,7 @@ void nss_detect_duplicates (const nss_swath_list *swath_list)
 
       cur = cur->next;
     }
+
+
 }
 

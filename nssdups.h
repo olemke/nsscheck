@@ -23,7 +23,7 @@
 #include "nssswath.h"
 
 
-void nss_detect_duplicates (const nss_swath_list *swath_list);
+void nss_detect_duplicates (const nss_swath_list *swath_list, int checkfiles);
 
 #endif /* NSSDUPS_H */
 

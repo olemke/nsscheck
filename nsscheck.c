@@ -24,6 +24,7 @@
 #include "nssgaps.h"
 #include "nssswath.h"
 
+static int check_flag = 0;
 static int dupdetection_flag = 0;
 static int gapdetection_flag = 0;
 static int gapsize = 0;
@@ -62,7 +63,7 @@ main (int argc, char *argv[])
     }
 
   if (printlist_flag)    nss_print_swath_list (swath_list);
-  if (dupdetection_flag) nss_detect_duplicates (swath_list);
+  if (dupdetection_flag) nss_detect_duplicates (swath_list, check_flag);
   if (gapdetection_flag) nss_detect_gaps (swath_list, gapsize, refine_flag);
   if (timestamp)         nss_check_timestamp (swath_list, timestamp);
   if (printinfo_flag)    nss_print_info (swath_list);
@@ -83,6 +84,7 @@ parse_options (int argc, char *argv[])
       static struct option long_options[] =
         {
           /* These options set a flag. */
+            {"check",      no_argument,       0, 'c'},
             {"duplicates", no_argument,       0, 'd'},
             {"gaps",       no_argument,       0, 'g'},
             {"help",       no_argument,       0, 'h'},
@@ -96,6 +98,7 @@ parse_options (int argc, char *argv[])
         };
 
       static char helptext[] =
+        "  -c, --check            Run zamsu2l1c on duplicate files.\n" \
         "  -d, --duplicates       Find duplicate files.\n" \
         "  -g, --gaps             Perform gap detection.\n" \
         "  -h, --help             Print this help\n" \
@@ -114,7 +117,7 @@ parse_options (int argc, char *argv[])
       /* getopt_long stores the option index here. */
       int option_index = 0;
 
-      c = getopt_long (argc, argv, "dghils:t:v",
+      c = getopt_long (argc, argv, "cdghils:t:v",
                        long_options, &option_index);
 
       /* Detect the end of the options. */
@@ -148,6 +151,7 @@ parse_options (int argc, char *argv[])
           break;
 
           /* Flags */
+        case 'c': check_flag = 1; break;
         case 'd': dupdetection_flag = 1; break;
         case 'g': gapdetection_flag = 1; break;
         case 'i': printinfo_flag = 1; break;
