@@ -77,7 +77,7 @@ void nss_detect_duplicates (const nss_swath_list *swath_list, int checkfiles)
                           printf ("BROKEN");
                           break;
                         default:
-                          printf ("Error running zamsu2l1c.sh. Check your atovs_tools installation");
+                          printf ("Error (%d) running zamsu2l1c.sh. Check your atovs_tools installation", ret);
                           break;
                         }
                       break;
