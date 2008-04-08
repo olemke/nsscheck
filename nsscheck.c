@@ -67,7 +67,7 @@ main (int argc, char *argv[])
   if (timestamp)         nss_check_timestamp (swath_list, timestamp);
   if (printinfo_flag)    nss_print_info (swath_list);
 
-  nss_free_swath_list (swath_list);
+  nss_free_swath_list (swath_list, 1);
 
   return (EXIT_SUCCESS);
 }

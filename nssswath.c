@@ -155,7 +155,7 @@ nss_build_swath_list (FILE *fp, int verbose)
 
   if (error)
     {
-      nss_free_swath_list (slist);
+      nss_free_swath_list (slist, 1);
       slist = NULL;
     }
   else
@@ -226,7 +226,7 @@ void nss_check_timestamp (const nss_swath_list *swath_list, char *timestamp)
 
 
 void
-nss_free_swath_list (const nss_swath_list *swath_list)
+nss_free_swath_list (const nss_swath_list *swath_list, int free_data)
 {
   nss_swath_list *cur;
   nss_swath_list *die;
@@ -236,7 +236,7 @@ nss_free_swath_list (const nss_swath_list *swath_list)
     {
       die = cur;
       cur = cur->next;
-      if (die->swath && die->swath->filename)
+      if (free_data && die->swath && die->swath->filename)
         {
           free (die->swath->filename);
           free (die->swath);
@@ -263,6 +263,9 @@ nss_parse_filename (const char *fname, nss_swath_data *swath, int verbose)
   if (NULL == (nss_start = strstr (fname, "NSS."))) return 1;
 
   swath->filename = strdup (fname);
+
+  strncpy (swath->basestring,  nss_start + 12, 27);
+  swath->basestring[27] = '\0';
 
   strncpy (swath->satellite,  nss_start + 9, 2);
   swath->satellite[4] = '\0';
