@@ -1,6 +1,6 @@
 /* nssswath.c
  *
- * Copyright (C) 2007 Oliver Lemke
+ * Copyright (C) 2007-2008 Oliver Lemke
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,6 +20,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "nssswath.h"
+
 
 nss_swath_list *nss_sort_swaths (const nss_swath_list *swath_list);
 int nss_parse_filename (const char *fname, nss_swath_data *swath, int verbose);
@@ -102,6 +103,7 @@ nss_swath_list *
 nss_build_swath_list (FILE *fp, int verbose)
 {
   char buf[1024];
+  char *chp;
   nss_swath_list *slist, *current_swath;
 
   slist = malloc (sizeof (nss_swath_list));
@@ -114,6 +116,7 @@ nss_build_swath_list (FILE *fp, int verbose)
       nss_swath_data *swath = malloc (sizeof (nss_swath_data));
 
       fgets (buf, 1024, fp);
+      if (NULL != (chp = strstr (buf, "\n"))) *chp = '\0';
       if (feof (fp)) break;
       if (!nss_parse_filename (buf, swath, verbose))
         {
@@ -125,7 +128,9 @@ nss_build_swath_list (FILE *fp, int verbose)
           current_swath = new_swath;
         }
       else
-        fprintf (stderr, "Parse error: %s\n", buf);
+        {
+          fprintf (stderr, "Parse error: %s\n", buf);
+        }
 
     }
 
@@ -194,103 +199,6 @@ void nss_check_timestamp (const nss_swath_list *swath_list, char *timestamp)
 
 
 void
-nss_detect_gaps (const nss_swath_list *swath_list, int gapsize, int refine)
-{
-  long gapcount = 0;
-  long gapignorecount = 0;
-  time_t gaptotal = 0;
-  nss_swath_list *cur = (nss_swath_list *)swath_list;
-
-  while (cur->next && cur->next->swath)
-    {
-      if (cur->next->swath->stime > cur->swath->etime)
-        {
-          nss_swath_data gap;
-          nss_swath_list *it;
-
-          gap.stime = cur->swath->etime;
-          gap.etime = cur->next->swath->stime;
-
-          /* To be 100% sure, check the whole swath list for
-           * a file that fills the gap. We might have two files
-           * with the same starting time but different end time.
-           * This check ensures that we take both into account. */
-          it = (nss_swath_list *)swath_list;
-          while (refine && it && it->swath && gap.stime)
-            {
-              if (it->swath->stime <= gap.stime
-                  && it->swath->etime >= gap.etime)
-                {
-                  gap.stime = gap.etime = 0;
-                }
-
-              if (it->swath->stime <= gap.etime
-                  && it->swath->etime >= gap.etime)
-                {
-                  gap.etime = it->swath->stime;
-                }
-
-              if (it->swath->stime <= gap.stime
-                  && it->swath->etime >= gap.stime)
-                {
-                  gap.stime = it->swath->etime;
-                }
-
-              it = it->next;
-            }
-
-          if (gap.etime - gap.stime > 0)
-            {
-              if (gap.etime - gap.stime >= gapsize * 60)
-                {
-                  char timestr[1024];
-
-                  strftime (timestr, 1024, "%Y-%m-%d %H:%M", gmtime (&gap.stime));
-                  printf ("Gap between %s", timestr);
-
-                  strftime (timestr, 1024, "%Y-%m-%d %H:%M", gmtime (&gap.etime));
-                  printf (" and %s, %ld mins\n", timestr, (gap.etime - gap.stime) / 60);
-                  gapcount++;
-                  gaptotal += gap.etime - gap.stime;
-                }
-              else
-                gapignorecount++;
-            }
-        }
-
-      cur = cur->next;
-    }
-
-  if (gapcount)
-    {
-      time_t hours;
-      time_t mins;
-
-      hours = gaptotal / (60 * 60);
-      mins = (gaptotal / 60) - hours * 60;
-      printf ("\n");
-      if (hours)
-        printf ("%ld gaps with a total length of %ld hours and %ld minutes found.\n",
-                gapcount, hours, mins);
-      else
-        printf ("%ld gaps with a total length of %ld minutes found.\n\n",
-                gapcount, mins);
-    }
-
-  if (gapsize)
-    {
-      if (gapignorecount)
-        printf ("%ld gaps smaller than %d minutes ignored.\n",
-                gapignorecount, gapsize);
-      else
-        printf ("No gaps smaller than %d minutes ignored.\n", gapsize);
-    }
-
-  printf ("\n");
-}
-
-
-void
 nss_free_swath_list (const nss_swath_list *swath_list)
 {
   nss_swath_list *cur;
@@ -318,7 +226,6 @@ int
 nss_parse_filename (const char *fname, nss_swath_data *swath, int verbose)
 {
   char *nss_start;
-  char *buf;
   char str[4];
   int i;
   time_t year;
@@ -329,8 +236,6 @@ nss_parse_filename (const char *fname, nss_swath_data *swath, int verbose)
   if (NULL == (nss_start = strstr (fname, "NSS."))) return 1;
 
   swath->filename = strdup (fname);
-  if (NULL != (buf = strstr (swath->filename, "\n")))
-      *buf = '\0';
 
   str[2] = '\0'; strncpy (str, nss_start + 13, 2);
   year = strtol (str, NULL, 10);

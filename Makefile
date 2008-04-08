@@ -5,7 +5,14 @@ CFLAGS = -O2
 
 all: nsscheck
 
-nsscheck: nssswath.h nssswath.c nsscheck.c
+nsscheck: \
+	nsscheck.c \
+	nssdups.c \
+	nssdups.h \
+	nssgaps.c \
+	nssgaps.h \
+	nssswath.c \
+	nssswath.h
 
 clean:
 	rm -f $(wildcard *.o) $(TARGETS)
