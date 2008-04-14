@@ -44,9 +44,9 @@ void nss_detect_duplicates (const nss_swath_list *swath_list,
   dups->swath = NULL;
   dups->next = NULL;
 
-  while (!error && cur->next && cur->next->swath)
+  while (!error)
     {
-      if (!strcmp (cur->swath->basestring, cur->next->swath->basestring))
+      if (cur->next && cur->next->swath && !strcmp (cur->swath->basestring, cur->next->swath->basestring))
         {
           if (!dups->swath)
             {
@@ -136,7 +136,10 @@ void nss_detect_duplicates (const nss_swath_list *swath_list,
           dups->next = NULL;
         }
 
-      cur = cur->next;
+      if (!(cur->next && cur->next->swath))
+        break;
+      else
+        cur = cur->next;
     }
 
   if (!error && checkfiles)
