@@ -33,6 +33,7 @@ static int printlist_flag = 0;
 static int refine_flag = 1;
 static int verbose_flag = 0;
 static char *timestamp = NULL;
+static char *movedirectory = NULL;
 
 void parse_options (int argc, char *argv[]);
 
@@ -63,7 +64,8 @@ main (int argc, char *argv[])
     }
 
   if (printlist_flag)    nss_print_swath_list (swath_list);
-  if (dupdetection_flag) nss_detect_duplicates (swath_list, check_flag);
+  if (dupdetection_flag) nss_detect_duplicates (swath_list, movedirectory,
+                                                check_flag);
   if (gapdetection_flag) nss_detect_gaps (swath_list, gapsize, refine_flag);
   if (timestamp)         nss_check_timestamp (swath_list, timestamp);
   if (printinfo_flag)    nss_print_info (swath_list);
@@ -90,6 +92,7 @@ parse_options (int argc, char *argv[])
             {"help",       no_argument,       0, 'h'},
             {"info",       no_argument,       0, 'i'},
             {"list",       no_argument,       0, 'l'},
+            {"move",       required_argument, 0, 'm'},
             {"norefine",   no_argument,       0, 'r'},
             {"size",       required_argument, 0, 's'},
             {"timestamp",  required_argument, 0, 't'},
@@ -105,6 +108,7 @@ parse_options (int argc, char *argv[])
         "  -i, --info             Print info about the input data.\n" \
         "  -l, --list             Print swath list.\n" \
         "      --norefine         Only do simple gap detection. (FOR TESTING ONLY)\n" \
+        "  -m, --move=DIRECTORY   Move duplicate files to DIRECTORY. Requires -c.\n" \
         "  -s, --size=GAPSIZE     Ignore gaps smaller than GAPSIZE minutes.\n" \
         "  -t, --timestamp=TIME   Check if any file provides data for the\n" \
         "                         given timestamp. TIME needs to be specified\n" \
@@ -117,7 +121,7 @@ parse_options (int argc, char *argv[])
       /* getopt_long stores the option index here. */
       int option_index = 0;
 
-      c = getopt_long (argc, argv, "cdghils:t:v",
+      c = getopt_long (argc, argv, "cdghilm:s:t:v",
                        long_options, &option_index);
 
       /* Detect the end of the options. */
@@ -141,6 +145,10 @@ parse_options (int argc, char *argv[])
           printf ("\n");
           printf ("%s", helptext);
           exit (EXIT_SUCCESS);
+
+        case 'm':
+          movedirectory = optarg;
+          break;
 
         case 's':
           gapsize = strtol (optarg, NULL, 10);

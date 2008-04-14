@@ -21,7 +21,8 @@
 #include "nssdups.h"
 
 
-void nss_detect_duplicates (const nss_swath_list *swath_list, int checkfiles)
+void nss_detect_duplicates (const nss_swath_list *swath_list,
+                            const char *movedirectory, int checkfiles)
 {
   int error = 0;
   int broken_files = 0, good_files = 0, safedel_files = 0;
@@ -138,28 +139,162 @@ void nss_detect_duplicates (const nss_swath_list *swath_list, int checkfiles)
       cur = cur->next;
     }
 
-  if (checkfiles)
+  if (!error && checkfiles)
     {
       if (safedel_files)
         {
-          printf ("\nFiles safe to delete:\n");
+          if (movedirectory && good_files)
+            {
+              printf ("\nMoving files:\n");
+            }
+          else
+            {
+              printf ("\nFiles safe to delete:\n");
+            }
 
+          if (movedirectory && !good_files && broken_files)
+            {
+              printf ("No good files found. Not going to move anything!!!\n");
+            }
+
+          int domove = 1;
           current_safedel = safedel;
+          if (current_safedel && current_safedel->swath
+              && movedirectory && good_files)
+            {
+              int ret;
+              char cmd[2048] = "";
+
+              strcat (cmd, "mkdir -p ");
+              strcat (cmd, movedirectory);
+              strcat (cmd, "/dups/");
+              printf ("  %s\n", cmd);
+              ret = system (cmd);
+              switch (ret)
+                {
+                case 2:
+                  printf ("FATAL ERROR: Can't execute mkdir command for %s/dups\n",
+                          movedirectory);
+                  break;
+                default:
+                  if (WEXITSTATUS(ret))
+                    {
+                      printf ("FATAL ERROR: Can't create directory %s/dups\n",
+                              movedirectory);
+                      domove = 0;
+                    }
+                }
+            }
+
           while (current_safedel && current_safedel->swath)
             {
-              printf ("  %s\n", current_safedel->swath->filename);
+              if (domove && movedirectory && good_files)
+                {
+                  int ret;
+                  char cmd[2048] = "";
+
+                  strcat (cmd, "mv ");
+                  strcat (cmd, current_safedel->swath->filename);
+                  strcat (cmd, " ");
+                  strcat (cmd, movedirectory);
+                  strcat (cmd, "/dups/");
+                  //strcat (cmd, " >/dev/null 2>&1");
+                  printf ("  %s\n", cmd);
+                  ret = system (cmd);
+                  switch (ret)
+                    {
+                    case 2:
+                      printf ("FATAL ERROR: Can't execute mv command for %s\n",
+                              current_safedel->swath->filename);
+                      break;
+                    default:
+                      if (WEXITSTATUS(ret))
+                        {
+                          printf ("FATAL ERROR: Can't move file %s\n",
+                                  current_safedel->swath->filename);
+                        }
+                    }
+                }
+              else
+                {
+                  printf ("  %s\n", current_safedel->swath->filename);
+                }
               current_safedel = current_safedel->next;
             }
         }
 
       if (broken_files)
         {
+          if (movedirectory && !good_files)
+            {
+              printf ("No good files found. Not going to move anything!!!\n");
+            }
+
+          int domove = 1;
+          current_broken = broken;
+          if (current_broken && current_broken->swath
+              && movedirectory && good_files)
+            {
+              int ret;
+              char cmd[2048] = "";
+
+              strcat (cmd, "mkdir -p ");
+              strcat (cmd, movedirectory);
+              strcat (cmd, "/broken/");
+              printf ("  %s\n", cmd);
+              ret = system (cmd);
+              switch (ret)
+                {
+                case 2:
+                  printf ("FATAL ERROR: Can't execute mkdir command for %s/broken\n",
+                          movedirectory);
+                  break;
+                default:
+                  if (WEXITSTATUS(ret))
+                    {
+                      printf ("FATAL ERROR: Can't create directory %s/broken\n",
+                              movedirectory);
+                      domove = 0;
+                    }
+                }
+            }
+
           printf ("\nBroken files:\n");
 
-          current_broken = broken;
           while (current_broken && current_broken->swath)
             {
               printf ("  %s\n", current_broken->swath->filename);
+              if (domove && movedirectory && good_files)
+                {
+                  int ret;
+                  char cmd[2048] = "";
+
+                  strcat (cmd, "mv ");
+                  strcat (cmd, current_broken->swath->filename);
+                  strcat (cmd, " ");
+                  strcat (cmd, movedirectory);
+                  strcat (cmd, "/broken/");
+                  //strcat (cmd, " >/dev/null 2>&1");
+                  printf ("  %s\n", cmd);
+                  ret = system (cmd);
+                  switch (ret)
+                    {
+                    case 2:
+                      printf ("FATAL ERROR: Can't execute mv command for %s\n",
+                              current_broken->swath->filename);
+                      break;
+                    default:
+                      if (WEXITSTATUS(ret))
+                        {
+                          printf ("FATAL ERROR: Can't move file %s\n",
+                                  current_broken->swath->filename);
+                        }
+                    }
+                }
+              else
+                {
+                  printf ("  %s\n", current_broken->swath->filename);
+                }
               current_broken = current_broken->next;
             }
         }
