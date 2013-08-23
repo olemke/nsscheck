@@ -5,7 +5,7 @@
 #include "nssswath.h"
 
 
-nss_swath_list *nss_sort_swaths (const nss_swath_list *swath_list);
+nss_swath_list *nss_sort_swaths (nss_swath_list *swath_list);
 int nss_parse_filename (const char *fname, nss_swath_data *swath, int verbose);
 
 
@@ -26,7 +26,7 @@ is_leap_year (int year)
 }
 
 /* Taken from http://www.c.happycodings.com/Sorting_Searching/code5.html */
-nss_swath_list *nss_sort_swaths (const nss_swath_list *swath_list) {
+nss_swath_list *nss_sort_swaths (nss_swath_list *swath_list) {
 
   nss_swath_list *head;
   nss_swath_list *a = NULL;
@@ -40,7 +40,7 @@ nss_swath_list *nss_sort_swaths (const nss_swath_list *swath_list) {
   // pointing up the node to which the comparisons
   // are being made. 
   */
-  head = (nss_swath_list *)swath_list;
+  head = swath_list;
   while(e != head->next)
     {
       c = a = head;
