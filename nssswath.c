@@ -255,7 +255,7 @@ nss_parse_filename (const char *fname, nss_swath_data *swath, int verbose)
   swath->basestring[27] = '\0';
 
   strncpy (swath->satellite,  nss_start + 9, 2);
-  swath->satellite[4] = '\0';
+  swath->satellite[2] = '\0';
 
   strncpy (swath->instrument, nss_start + 4, 4);
   swath->instrument[4] = '\0';
