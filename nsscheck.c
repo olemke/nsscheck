@@ -22,7 +22,10 @@ static int verbose_flag = 0;
 static char *timestamp = NULL;
 static char *movedirectory = NULL;
 
+
 void parse_options (int argc, char *argv[]);
+
+void print_usage(char *argv[]);
 
 
 int
@@ -38,7 +41,9 @@ main (int argc, char *argv[])
         || gapdetection_flag
         || timestamp))
     {
-      printf ("You must at least specify -d, -g, -i, -l or -t.\n");
+      print_usage(argv);
+      printf ("\nYou must at least specify -d, -g, -i, -l or -t.\n");
+
       return (EXIT_FAILURE);
     }
 
@@ -63,48 +68,56 @@ main (int argc, char *argv[])
 }
 
 
+void print_usage(char *argv[])
+{
+  static char helptext[] =
+    "  -c, --check            Run zamsu2l1c on duplicate files.\n" \
+    "  -d, --duplicates       Find duplicate files.\n" \
+    "  -g, --gaps             Perform gap detection.\n" \
+    "  -h, --help             Print this help\n" \
+    "  -i, --info             Print info about the input data.\n" \
+    "  -l, --list             Print swath list.\n" \
+    "      --norefine         Only do simple gap detection. (FOR TESTING ONLY)\n" \
+    "  -m, --move=DIRECTORY   Move duplicate files to DIRECTORY. Requires -c.\n" \
+    "  -s, --size=GAPSIZE     Ignore gaps smaller than GAPSIZE minutes.\n" \
+    "  -t, --timestamp=TIME   Check if any file provides data for the\n" \
+    "                         given timestamp. TIME needs to be specified\n" \
+    "                         the format yyyy-mm-dd hh:mm. NOTE: The time\n" \
+    "                         you give is converted from localtime to GMT.\n" \
+    "  -v, --verbose          Be more verbose.\n" \
+    "\n" \
+    "Report bugs to Oliver Lemke <olemke@core-dump.info>.\n";
+
+  printf ("Usage: %s OPTIONS\n", argv[0]);
+  printf ("\n");
+  printf ("%s", helptext);
+}
+
+
 void
 parse_options (int argc, char *argv[])
 {
   int c;
 
+  static struct option long_options[] =
+    {
+      /* These options set a flag. */
+        {"check",      no_argument,       0, 'c'},
+        {"duplicates", no_argument,       0, 'd'},
+        {"gaps",       no_argument,       0, 'g'},
+        {"help",       no_argument,       0, 'h'},
+        {"info",       no_argument,       0, 'i'},
+        {"list",       no_argument,       0, 'l'},
+        {"move",       required_argument, 0, 'm'},
+        {"norefine",   no_argument,       0, 'r'},
+        {"size",       required_argument, 0, 's'},
+        {"timestamp",  required_argument, 0, 't'},
+        {"verbose",    no_argument,       0, 'v'},
+        {0, 0, 0, 0}
+    };
+
   while (1)
     {
-      static struct option long_options[] =
-        {
-          /* These options set a flag. */
-            {"check",      no_argument,       0, 'c'},
-            {"duplicates", no_argument,       0, 'd'},
-            {"gaps",       no_argument,       0, 'g'},
-            {"help",       no_argument,       0, 'h'},
-            {"info",       no_argument,       0, 'i'},
-            {"list",       no_argument,       0, 'l'},
-            {"move",       required_argument, 0, 'm'},
-            {"norefine",   no_argument,       0, 'r'},
-            {"size",       required_argument, 0, 's'},
-            {"timestamp",  required_argument, 0, 't'},
-            {"verbose",    no_argument,       0, 'v'},
-            {0, 0, 0, 0}
-        };
-
-      static char helptext[] =
-        "  -c, --check            Run zamsu2l1c on duplicate files.\n" \
-        "  -d, --duplicates       Find duplicate files.\n" \
-        "  -g, --gaps             Perform gap detection.\n" \
-        "  -h, --help             Print this help\n" \
-        "  -i, --info             Print info about the input data.\n" \
-        "  -l, --list             Print swath list.\n" \
-        "      --norefine         Only do simple gap detection. (FOR TESTING ONLY)\n" \
-        "  -m, --move=DIRECTORY   Move duplicate files to DIRECTORY. Requires -c.\n" \
-        "  -s, --size=GAPSIZE     Ignore gaps smaller than GAPSIZE minutes.\n" \
-        "  -t, --timestamp=TIME   Check if any file provides data for the\n" \
-        "                         given timestamp. TIME needs to be specified\n" \
-        "                         the format yyyy-mm-dd hh:mm. NOTE: The time\n" \
-        "                         you give is converted from localtime to GMT.\n" \
-        "  -v, --verbose          Be more verbose.\n" \
-        "\n" \
-        "Report bugs to Oliver Lemke <olemke@core-dump.info>.\n";
-
       /* getopt_long stores the option index here. */
       int option_index = 0;
 
@@ -128,9 +141,7 @@ parse_options (int argc, char *argv[])
           break;
 
         case 'h':
-          printf ("Usage: %s OPTIONS\n", argv[0]);
-          printf ("\n");
-          printf ("%s", helptext);
+          print_usage(argv);
           exit (EXIT_SUCCESS);
 
         case 'm':
