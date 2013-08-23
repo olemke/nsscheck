@@ -14,9 +14,9 @@ NSS.MHSX.M1.D13212.S2151.E2241.B0450707.MM
 
 List of filenames is read from stdin, e.g.:
 
-cat filelist | nssscheck -g
+cat filelist | nsscheck -g
 
 or
 
-find . -name "NSS*" | nssscheck -g
+find . -name "NSS*" | nsscheck -g
 
