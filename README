@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/olemke/nsscheck.svg?branch=master)](https://travis-ci.org/olemke/nsscheck)
+
 Program to check list of AMSU-A/AMSU-B/MHS/HIRS satellite data files
 for gaps and duplicates.
 
