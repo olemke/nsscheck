@@ -1,6 +1,7 @@
 /* Copyright (c) 2013 Oliver Lemke */
 
 #include <stdlib.h>
+#include <sys/wait.h>
 #include "nssdups.h"
 
 
