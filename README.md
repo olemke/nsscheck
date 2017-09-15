@@ -5,14 +5,16 @@ for gaps and duplicates.
 
 Filenames have to be in the format:
 
-  NSS.MHSX.M1.D13212.S2151.E2241.B0450707.MM
-      |    |   | |    |     |
-      |    |   | |    |     End time
-      |    |   | |    Start time
-      |    |   | Day of year
-      |    |   Year
-      |    Satellite
-      Instrument
+```
+NSS.MHSX.M1.D13212.S2151.E2241.B0450707.MM
+    |    |   | |    |     |
+    |    |   | |    |     End time
+    |    |   | |    Start time
+    |    |   | Day of year
+    |    |   Year
+    |    Satellite
+    Instrument
+```
 
 List of filenames is read from stdin, e.g.:
 
