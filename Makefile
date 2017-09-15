@@ -1,4 +1,3 @@
-#CC = gcc
 TARGETS = nsscheck
 CFLAGS = -Wall -pedantic -std=c11 -D_POSIX_C_SOURCE=200809L -O2
 
