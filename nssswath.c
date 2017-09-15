@@ -102,8 +102,7 @@ nss_build_swath_list (FILE *fp, int verbose)
     {
       nss_swath_data *swath = malloc (sizeof (nss_swath_data));
 
-      fgets (buf, 1024, fp);
-      if (NULL != (chp = strstr (buf, "\n"))) *chp = '\0';
+      if (fgets (buf, 1024, fp) && NULL != (chp = strstr (buf, "\n"))) *chp = '\0';
       if (feof (fp)) break;
       if (!nss_parse_filename (buf, swath, verbose))
         {
