@@ -70,23 +70,23 @@ main(int argc, char *argv[])
 
 void print_usage(char *argv[])
 {
-    static char helptext[] =
-            "  -c, --check            Run zamsu2l1c on duplicate files.\n" \
-    "  -d, --duplicates       Find duplicate files.\n" \
-    "  -g, --gaps             Perform gap detection.\n" \
-    "  -h, --help             Print this help\n" \
-    "  -i, --info             Print info about the input data.\n" \
-    "  -l, --list             Print swath list.\n" \
-    "      --norefine         Only do simple gap detection. (FOR TESTING ONLY)\n" \
-    "  -m, --move=DIRECTORY   Move duplicate files to DIRECTORY. Requires -c.\n" \
-    "  -s, --size=GAPSIZE     Ignore gaps smaller than GAPSIZE minutes.\n" \
-    "  -t, --timestamp=TIME   Check if any file provides data for the\n" \
-    "                         given timestamp. TIME needs to be specified\n" \
-    "                         the format yyyy-mm-dd hh:mm. NOTE: The time\n" \
-    "                         you give is converted from localtime to GMT.\n" \
-    "  -v, --verbose          Be more verbose.\n" \
-    "\n" \
-    "Report bugs to Oliver Lemke <olemke@core-dump.info>.\n";
+    char helptext[] = \
+        "-c, --check            Run zamsu2l1c on duplicate files.\n" \
+        "  -d, --duplicates       Find duplicate files.\n" \
+        "  -g, --gaps             Perform gap detection.\n" \
+        "  -h, --help             Print this help\n" \
+        "  -i, --info             Print info about the input data.\n" \
+        "  -l, --list             Print swath list.\n" \
+        "      --norefine         Only do simple gap detection. (FOR TESTING ONLY)\n" \
+        "  -m, --move=DIRECTORY   Move duplicate files to DIRECTORY. Requires -c.\n" \
+        "  -s, --size=GAPSIZE     Ignore gaps smaller than GAPSIZE minutes.\n" \
+        "  -t, --timestamp=TIME   Check if any file provides data for the\n" \
+        "                         given timestamp. TIME needs to be specified\n" \
+        "                         the format yyyy-mm-dd hh:mm. NOTE: The time\n" \
+        "                         you give is converted from localtime to GMT.\n" \
+        "  -v, --verbose          Be more verbose.\n" \
+        "\n" \
+        "Report bugs to Oliver Lemke <olemke@core-dump.info>.\n";
 
     printf("Usage: %s OPTIONS\n", argv[0]);
     printf("\n");
