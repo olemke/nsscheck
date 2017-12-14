@@ -13,7 +13,7 @@
 static int check_flag = 0;
 static int dupdetection_flag = 0;
 static int gapdetection_flag = 0;
-static long gapsize = 0;
+static int gapsize = 0;
 static int printinfo_flag = 0;
 static int printlist_flag = 0;
 static int refine_flag = 1;
@@ -149,7 +149,7 @@ parse_options(int argc, char *argv[])
                 break;
 
             case 's':
-                gapsize = strtol(optarg, NULL, 10);
+                gapsize = (int) strtol(optarg, NULL, 10);
                 break;
 
             case 't':
