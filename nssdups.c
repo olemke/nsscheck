@@ -1,300 +1,303 @@
 /* Copyright (c) 2013 Oliver Lemke */
 
 #include <stdlib.h>
-#include <sys/wait.h>
 #include "nssdups.h"
 
 
-void nss_detect_duplicates (const nss_swath_list *swath_list,
-                            const char *movedirectory, int checkfiles)
+void nss_detect_duplicates(const nss_swath_list *swath_list,
+                           const char *movedirectory, int checkfiles)
 {
-  int error = 0;
-  int broken_files = 0, good_files = 0, safedel_files = 0;
+    int error = 0;
+    int broken_files = 0, good_files = 0, safedel_files = 0;
 
-  nss_swath_list *cur = (nss_swath_list *)swath_list;
-  nss_swath_list *dups = malloc (sizeof (nss_swath_list));
-  nss_swath_list *safedel = malloc (sizeof (nss_swath_list));
-  nss_swath_list *current_safedel = safedel;
-  nss_swath_list *broken = malloc (sizeof (nss_swath_list));
-  nss_swath_list *current_broken = broken;
-  nss_swath_list *current_dup = dups;
+    nss_swath_list *cur = (nss_swath_list *) swath_list;
+    nss_swath_list *dups = malloc(sizeof(nss_swath_list));
+    nss_swath_list *safedel = malloc(sizeof(nss_swath_list));
+    nss_swath_list *current_safedel = safedel;
+    nss_swath_list *broken = malloc(sizeof(nss_swath_list));
+    nss_swath_list *current_broken = broken;
+    nss_swath_list *current_dup = dups;
 
-  safedel->swath = NULL;
-  safedel->next = NULL;
+    safedel->swath = NULL;
+    safedel->next = NULL;
 
-  broken->swath = NULL;
-  broken->next = NULL;
+    broken->swath = NULL;
+    broken->next = NULL;
 
-  dups->swath = NULL;
-  dups->next = NULL;
+    dups->swath = NULL;
+    dups->next = NULL;
 
-  while (!error)
+    while (!error)
     {
-      if (cur->next && cur->next->swath && !strcmp (cur->swath->basestring, cur->next->swath->basestring))
+        if (cur->next && cur->next->swath
+            && !strcmp(cur->swath->basestring, cur->next->swath->basestring))
         {
-          if (!dups->swath)
+            if (!dups->swath)
             {
-              current_dup->swath = cur->swath;
+                current_dup->swath = cur->swath;
             }
-          nss_swath_list *new_dup = malloc (sizeof (nss_swath_list));
-          new_dup->swath = cur->next->swath;
-          new_dup->next = NULL;
-          current_dup->next = new_dup;
-          current_dup = new_dup;
+            nss_swath_list *new_dup = malloc(sizeof(nss_swath_list));
+            new_dup->swath = cur->next->swath;
+            new_dup->next = NULL;
+            current_dup->next = new_dup;
+            current_dup = new_dup;
         }
-      else if (dups->swath)
+        else if (dups->swath)
         {
-          int found_not_broken = 0;
-          current_dup = dups;
-          printf ("Duplicates:\n");
-          while (!error && current_dup && current_dup->swath)
+            int found_not_broken = 0;
+            current_dup = dups;
+            printf("Duplicates:\n");
+            while (!error && current_dup && current_dup->swath)
             {
-              if (checkfiles)
+                if (checkfiles)
                 {
-                  int ret;
-                  char cmd[2048] = "";
+                    int ret;
+                    char cmd[2048] = "";
 
-                  strcat (cmd, "zamsu2l1c.sh ");
-                  strcat (cmd, current_dup->swath->filename);
-                  strcat (cmd, " >/dev/null 2>&1");
-                  ret = system (cmd);
+                    strcat (cmd, "zamsu2l1c.sh ");
+                    strcat (cmd, current_dup->swath->filename);
+                    strcat (cmd, " >/dev/null 2>&1");
+                    ret = system(cmd);
 
-                  printf ("  %s (", current_dup->swath->filename);
-                  switch (ret)
+                    printf("  %s (", current_dup->swath->filename);
+                    switch (ret)
                     {
-                    case 2:
-                      printf ("zamsu2l1c cancelled, bailing out");
-                      error = 1;
-                      break;
-                    default:
-                      switch (WEXITSTATUS(ret))
-                        {
-                        case 0:
-                          good_files++;
-                          printf ("OK");
-                          if (found_not_broken)
-                            {
-                              safedel_files++;
-                              nss_swath_list *new_safedel = malloc (sizeof (nss_swath_list));
-                              new_safedel->swath = NULL;
-                              new_safedel->next = NULL;
-                              current_safedel->swath=current_dup->swath;
-                              current_safedel->next = new_safedel;
-                              current_safedel = new_safedel;
-                            }
-                          else
-                            {
-                              found_not_broken = 1;
-                            }
-                          break;
-                        case 1:
-                          broken_files++;
-                          nss_swath_list *new_broken = malloc (sizeof (nss_swath_list));
-                          new_broken->swath = NULL;
-                          new_broken->next = NULL;
-                          current_broken->swath=current_dup->swath;
-                          current_broken->next = new_broken;
-                          current_broken = new_broken;
-                          printf ("BROKEN");
-                          break;
+                        case 2:
+                            printf("zamsu2l1c cancelled, bailing out");
+                            error = 1;
+                            break;
                         default:
-                          printf ("Error (%d) running zamsu2l1c.sh. Check your atovs_tools installation", ret);
-                          break;
-                        }
-                      break;
+                            switch (WEXITSTATUS(ret))
+                            {
+                                case 0:
+                                    good_files++;
+                                    printf("OK");
+                                    if (found_not_broken)
+                                    {
+                                        safedel_files++;
+                                        nss_swath_list *new_safedel = malloc(
+                                                sizeof(nss_swath_list));
+                                        new_safedel->swath = NULL;
+                                        new_safedel->next = NULL;
+                                        current_safedel->swath = current_dup->swath;
+                                        current_safedel->next = new_safedel;
+                                        current_safedel = new_safedel;
+                                    }
+                                    else
+                                    {
+                                        found_not_broken = 1;
+                                    }
+                                    break;
+                                case 1:
+                                    broken_files++;
+                                    nss_swath_list *new_broken = malloc(
+                                            sizeof(nss_swath_list));
+                                    new_broken->swath = NULL;
+                                    new_broken->next = NULL;
+                                    current_broken->swath = current_dup->swath;
+                                    current_broken->next = new_broken;
+                                    current_broken = new_broken;
+                                    printf("BROKEN");
+                                    break;
+                                default:
+                                    printf("Error (%d) running zamsu2l1c.sh. Check your atovs_tools installation",
+                                           ret);
+                                    break;
+                            }
+                            break;
                     }
 
-                  printf (")\n");
+                    printf(")\n");
 
                 }
-              else
+                else
                 {
-                  printf ("  %s\n", current_dup->swath->filename);
+                    printf("  %s\n", current_dup->swath->filename);
                 }
-              current_dup = current_dup->next;
+                current_dup = current_dup->next;
             }
-          nss_free_swath_list (dups, 0);
-          dups = malloc (sizeof (nss_swath_list));
-          current_dup = dups;
-          dups->swath = NULL;
-          dups->next = NULL;
+            nss_free_swath_list(dups, 0);
+            dups = malloc(sizeof(nss_swath_list));
+            current_dup = dups;
+            dups->swath = NULL;
+            dups->next = NULL;
         }
 
-      if (!(cur->next && cur->next->swath))
-        break;
-      else
-        cur = cur->next;
+        if (!(cur->next && cur->next->swath))
+            break;
+        else
+            cur = cur->next;
     }
 
-  if (!error && checkfiles)
+    if (!error && checkfiles)
     {
-      if (safedel_files)
+        if (safedel_files)
         {
-          if (movedirectory && good_files)
+            if (movedirectory && good_files)
             {
-              printf ("\nMoving files:\n");
+                printf("\nMoving files:\n");
             }
-          else
+            else
             {
-              printf ("\nFiles safe to delete:\n");
-            }
-
-          if (movedirectory && !good_files && broken_files)
-            {
-              printf ("No good files found. Not going to move anything!!!\n");
+                printf("\nFiles safe to delete:\n");
             }
 
-          int domove = 1;
-          current_safedel = safedel;
-          if (current_safedel && current_safedel->swath
-              && movedirectory && good_files)
+            if (movedirectory && !good_files && broken_files)
             {
-              int ret;
-              char cmd[2048] = "";
+                printf("No good files found. Not going to move anything!!!\n");
+            }
 
-              strcat (cmd, "mkdir -p ");
-              strcat (cmd, movedirectory);
-              strcat (cmd, "/dups/");
-              printf ("  %s\n", cmd);
-              ret = system (cmd);
-              switch (ret)
+            int domove = 1;
+            current_safedel = safedel;
+            if (current_safedel && current_safedel->swath
+                && movedirectory && good_files)
+            {
+                int ret;
+                char cmd[2048] = "";
+
+                strcat (cmd, "mkdir -p ");
+                strcat (cmd, movedirectory);
+                strcat (cmd, "/dups/");
+                printf("  %s\n", cmd);
+                ret = system(cmd);
+                switch (ret)
                 {
-                case 2:
-                  printf ("FATAL ERROR: Can't execute mkdir command for %s/dups\n",
-                          movedirectory);
-                  break;
-                default:
-                  if (WEXITSTATUS(ret))
-                    {
-                      printf ("FATAL ERROR: Can't create directory %s/dups\n",
-                              movedirectory);
-                      domove = 0;
-                    }
-                }
-            }
-
-          while (current_safedel && current_safedel->swath)
-            {
-              if (domove && movedirectory && good_files)
-                {
-                  int ret;
-                  char cmd[2048] = "";
-
-                  strcat (cmd, "mv ");
-                  strcat (cmd, current_safedel->swath->filename);
-                  strcat (cmd, " ");
-                  strcat (cmd, movedirectory);
-                  strcat (cmd, "/dups/");
-                  //strcat (cmd, " >/dev/null 2>&1");
-                  printf ("  %s\n", cmd);
-                  ret = system (cmd);
-                  switch (ret)
-                    {
                     case 2:
-                      printf ("FATAL ERROR: Can't execute mv command for %s\n",
-                              current_safedel->swath->filename);
-                      break;
+                        printf("FATAL ERROR: Can't execute mkdir command for %s/dups\n",
+                               movedirectory);
+                        break;
                     default:
-                      if (WEXITSTATUS(ret))
+                        if (WEXITSTATUS(ret))
                         {
-                          printf ("FATAL ERROR: Can't move file %s\n",
-                                  current_safedel->swath->filename);
+                            printf("FATAL ERROR: Can't create directory %s/dups\n",
+                                   movedirectory);
+                            domove = 0;
                         }
+                }
+            }
+
+            while (current_safedel && current_safedel->swath)
+            {
+                if (domove && movedirectory && good_files)
+                {
+                    int ret;
+                    char cmd[2048] = "";
+
+                    strcat (cmd, "mv ");
+                    strcat (cmd, current_safedel->swath->filename);
+                    strcat (cmd, " ");
+                    strcat (cmd, movedirectory);
+                    strcat (cmd, "/dups/");
+                    //strcat (cmd, " >/dev/null 2>&1");
+                    printf("  %s\n", cmd);
+                    ret = system(cmd);
+                    switch (ret)
+                    {
+                        case 2:
+                            printf("FATAL ERROR: Can't execute mv command for %s\n",
+                                   current_safedel->swath->filename);
+                            break;
+                        default:
+                            if (WEXITSTATUS(ret))
+                            {
+                                printf("FATAL ERROR: Can't move file %s\n",
+                                       current_safedel->swath->filename);
+                            }
                     }
                 }
-              else
+                else
                 {
-                  printf ("  %s\n", current_safedel->swath->filename);
+                    printf("  %s\n", current_safedel->swath->filename);
                 }
-              current_safedel = current_safedel->next;
+                current_safedel = current_safedel->next;
             }
         }
 
-      if (broken_files)
+        if (broken_files)
         {
-          if (movedirectory && !good_files)
+            if (movedirectory && !good_files)
             {
-              printf ("No good files found. Not going to move anything!!!\n");
+                printf("No good files found. Not going to move anything!!!\n");
             }
 
-          int domove = 1;
-          current_broken = broken;
-          if (current_broken && current_broken->swath
-              && movedirectory && good_files)
+            int domove = 1;
+            current_broken = broken;
+            if (current_broken && current_broken->swath
+                && movedirectory && good_files)
             {
-              int ret;
-              char cmd[2048] = "";
+                int ret;
+                char cmd[2048] = "";
 
-              strcat (cmd, "mkdir -p ");
-              strcat (cmd, movedirectory);
-              strcat (cmd, "/broken/");
-              printf ("  %s\n", cmd);
-              ret = system (cmd);
-              switch (ret)
+                strcat (cmd, "mkdir -p ");
+                strcat (cmd, movedirectory);
+                strcat (cmd, "/broken/");
+                printf("  %s\n", cmd);
+                ret = system(cmd);
+                switch (ret)
                 {
-                case 2:
-                  printf ("FATAL ERROR: Can't execute mkdir command for %s/broken\n",
-                          movedirectory);
-                  break;
-                default:
-                  if (WEXITSTATUS(ret))
-                    {
-                      printf ("FATAL ERROR: Can't create directory %s/broken\n",
-                              movedirectory);
-                      domove = 0;
-                    }
-                }
-            }
-
-          printf ("\nBroken files:\n");
-
-          while (current_broken && current_broken->swath)
-            {
-              printf ("  %s\n", current_broken->swath->filename);
-              if (domove && movedirectory && good_files)
-                {
-                  int ret;
-                  char cmd[2048] = "";
-
-                  strcat (cmd, "mv ");
-                  strcat (cmd, current_broken->swath->filename);
-                  strcat (cmd, " ");
-                  strcat (cmd, movedirectory);
-                  strcat (cmd, "/broken/");
-                  //strcat (cmd, " >/dev/null 2>&1");
-                  printf ("  %s\n", cmd);
-                  ret = system (cmd);
-                  switch (ret)
-                    {
                     case 2:
-                      printf ("FATAL ERROR: Can't execute mv command for %s\n",
-                              current_broken->swath->filename);
-                      break;
+                        printf("FATAL ERROR: Can't execute mkdir command for %s/broken\n",
+                               movedirectory);
+                        break;
                     default:
-                      if (WEXITSTATUS(ret))
+                        if (WEXITSTATUS(ret))
                         {
-                          printf ("FATAL ERROR: Can't move file %s\n",
-                                  current_broken->swath->filename);
+                            printf("FATAL ERROR: Can't create directory %s/broken\n",
+                                   movedirectory);
+                            domove = 0;
                         }
+                }
+            }
+
+            printf("\nBroken files:\n");
+
+            while (current_broken && current_broken->swath)
+            {
+                printf("  %s\n", current_broken->swath->filename);
+                if (domove && movedirectory && good_files)
+                {
+                    int ret;
+                    char cmd[2048] = "";
+
+                    strcat (cmd, "mv ");
+                    strcat (cmd, current_broken->swath->filename);
+                    strcat (cmd, " ");
+                    strcat (cmd, movedirectory);
+                    strcat (cmd, "/broken/");
+                    //strcat (cmd, " >/dev/null 2>&1");
+                    printf("  %s\n", cmd);
+                    ret = system(cmd);
+                    switch (ret)
+                    {
+                        case 2:
+                            printf("FATAL ERROR: Can't execute mv command for %s\n",
+                                   current_broken->swath->filename);
+                            break;
+                        default:
+                            if (WEXITSTATUS(ret))
+                            {
+                                printf("FATAL ERROR: Can't move file %s\n",
+                                       current_broken->swath->filename);
+                            }
                     }
                 }
-              else
+                else
                 {
-                  printf ("  %s\n", current_broken->swath->filename);
+                    printf("  %s\n", current_broken->swath->filename);
                 }
-              current_broken = current_broken->next;
+                current_broken = current_broken->next;
             }
         }
 
-      if (!good_files && broken_files)
+        if (!good_files && broken_files)
         {
-          printf ("\nWARNING!!!! Found %d broken files but no good files.\n", broken_files);
-          printf ("This might indicate a problem with your zamsu2l1c.sh.\n");
-          printf ("Make sure it is working properly!!!\n");
+            printf("\nWARNING!!!! Found %d broken files but no good files.\n",
+                   broken_files);
+            printf("This might indicate a problem with your zamsu2l1c.sh.\n");
+            printf("Make sure it is working properly!!!\n");
         }
     }
 
-  nss_free_swath_list (safedel, 0);
-  nss_free_swath_list (broken, 0);
+    nss_free_swath_list(safedel, 0);
+    nss_free_swath_list(broken, 0);
 }
-

@@ -6,8 +6,7 @@
 #include "nssswath.h"
 
 
-void nss_detect_gaps (const nss_swath_list *swath_list,
-                      int gapsize, int refine);
+void nss_detect_gaps(const nss_swath_list *swath_list,
+                     int gapsize, int refine);
 
 #endif /* NSSGAPS_H */
-
