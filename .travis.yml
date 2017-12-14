@@ -9,5 +9,9 @@ matrix:
   exclude:
   - os: osx
     compiler : gcc
-script: make
+script:
+  - mkdir -p build
+  - cd build
+  - cmake ..
+  - make
 
