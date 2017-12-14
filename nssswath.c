@@ -106,26 +106,26 @@ nss_build_swath_list(FILE *fp, int verbose)
 
         if (fgets(buf, 1024, fp) && NULL != (chp = strstr(buf, "\n")))
             *chp = '\0';
-        if (feof(fp)) break;
+        if (feof(fp)) continue;
         if (!nss_parse_filename(buf, swath, verbose))
         {
-            if (satellite && strcmp(satellite, swath->satellite))
+            if (satellite && strcmp(satellite, swath->satellite) != 0)
             {
                 fprintf(stderr,
                         "Data error: File list contains different satellites (%s and %s)\n",
                         satellite, swath->satellite);
                 error = 1;
-                break;
+                continue;
             }
             satellite = swath->satellite;
 
-            if (instrument && strcmp(instrument, swath->instrument))
+            if (instrument && strcmp(instrument, swath->instrument) != 0)
             {
                 fprintf(stderr,
                         "Data error: File list contains different instruments (%s and %s)\n",
                         instrument, swath->instrument);
                 error = 1;
-                break;
+                continue;
             }
             instrument = swath->instrument;
 
@@ -171,23 +171,23 @@ void nss_check_timestamp(const nss_swath_list *swath_list, char *timestamp)
 
     str[4] = '\0';
     strncpy (str, timestamp, 4);
-    tstamp.tm_year = strtol(str, NULL, 10) - 1900;
+    tstamp.tm_year = (int)strtol(str, NULL, 10) - 1900;
 
     str[2] = '\0';
     strncpy (str, timestamp + 5, 2);
-    tstamp.tm_mon = strtol(str, NULL, 10) - 1;
+    tstamp.tm_mon = (int)strtol(str, NULL, 10) - 1;
 
     str[2] = '\0';
     strncpy (str, timestamp + 8, 2);
-    tstamp.tm_mday = strtol(str, NULL, 10);
+    tstamp.tm_mday = (int)strtol(str, NULL, 10);
 
     str[2] = '\0';
     strncpy (str, timestamp + 11, 2);
-    tstamp.tm_hour = strtol(str, NULL, 10);
+    tstamp.tm_hour = (int)strtol(str, NULL, 10);
 
     str[2] = '\0';
     strncpy (str, timestamp + 14, 2);
-    tstamp.tm_min = strtol(str, NULL, 10);
+    tstamp.tm_min = (int)strtol(str, NULL, 10);
 
     checktime = mktime(&tstamp);
     if (checktime == (time_t) (-1))
